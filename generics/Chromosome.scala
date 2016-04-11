@@ -1,9 +1,9 @@
 package scalgen.generics
 
-// Created by sutol on 28/03/2016. Part of scalagen.
+// Created by sutol on 28/03/2016. Part of scalgen.
 
 
-abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Ordered[Chromosome] {
+abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Population with Ordered[Chromosome] {
     val geneCount = parent.geneCount
     var genes: Int = 0
 
@@ -19,7 +19,11 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Ordered
         bit.asInstanceOf[Boolean]
     }
 
-    //Produces a child from the genes of this chromosome and another.
+    /** Produces a child from the genes of this chromosome and another.
+      *
+      * @param that The other chromosome for crossover.
+      * @return A tuple of two chromosomes produced by the crossover
+      */
     def UX(that: this.type): (this.type, this.type) = {
         val parent1 = this.genesToArray
         val parent2 = that.genesToArray
@@ -36,7 +40,7 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Ordered
             }
         }
 
-        val child1 = new parent.T(parent, geneCount)
+        val child1 = new this.type(parent, geneCount)
         val child2 = new this.type(parent, geneCount)
         child1.arrayToGenes(newGenes1)
         child2.arrayToGenes(newGenes2)
@@ -55,7 +59,10 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Ordered
         arrayToGenes(newGenes)
     }
 
-    //Returns the current chromosome's genes as an array of boolean values representing the current alleles.
+    /** Returns the current chromosome's genes as an array of boolean values representing the current alleles.
+      *
+      * @return An array of booleans which represents the genes of the chromosome.
+      */
     def genesToArray: Array[Boolean] = {
         val bitArray = new Array[Boolean](geneCount)
         for (i <- 0 until geneCount) {
@@ -68,7 +75,11 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Ordered
         bitArray
     }
 
-    //Sets an array of boolean values to the current chromosome's genes.
+    /** Sets an array of boolean values to the current chromosome's genes.
+      *
+      * @param arrayOfBits An array of booleans
+      * @return The array of booleans as represented by an integer.
+      */
     def arrayToGenes(arrayOfBits: Array[Boolean]): Int = {
         var convertedGenes: Int = 0
         for (i <- arrayOfBits.indices) {
@@ -79,7 +90,7 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Ordered
         convertedGenes
     }
 
-    def compare(that: this.type) = this.getFitness - that.getFitness
+    def compare(that: this.type) = 0 - (this.getFitness - that.getFitness)
 
     //Calculates the fitness value of the chromosome.
     def getFitness: Int = {
@@ -92,3 +103,4 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Ordered
         fitness
     }
 }
+

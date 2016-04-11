@@ -1,18 +1,26 @@
 package scalgen.generics
 
-import scala.util.{Random, Sorting}
 import scala.util.control.Breaks._
+import scala.util.{Random, Sorting}
+
 // Created by sutol on 30/03/2016. Part of scalgen.
 
-/** A generic controller class for genetic algorithms.
+/** A generic controller class for genetic algorithms
   *
-  * @tparam T The population member class. Added in case you need more than one chromosome per population member.
-  *           Must implement all functions in the abstract Chromosome class in this package.
   */
-abstract class Population[T <: Chromosome] {
+abstract class Population extends Chromosome {
+    type T = Chromosome
+    /** The random number generator. Ensures simulations are identical for easier testing; consistent randomness lets
+      * you see effects of changes more clearly. Alternately, use a randomly generated value (or something random-ish)
+      * for random simulations.
+      */
+    val seededRandom = new Random(randomSeed)
+    /** The target population member. */
+    val target: Chromosome
     /** The number of genes contained in one chromosome. */
     var geneCount: Int
-    /** The number of members in the population. MUST BE EVEN because I am bad at scala. */ //TODO: fix this <-
+    /** The number of members in the population. MUST BE EVEN because I am bad at scala. */
+    //TODO: fix this <-
     var populationSize: Int
     /** The chance out of 1 that each gene will mutate. Around 0.0015 is good. */
     var mutateChance: Double
@@ -20,21 +28,14 @@ abstract class Population[T <: Chromosome] {
     var elitismCount: Int
     /** The seed used to create a random generator. See seededRandom for more info. */
     var randomSeed: Int
-
-    /** The random number generator. Ensures simulations are identical for easier testing; consistent randomness lets
-      * you see effects of changes more clearly. Alternately, use a randomly generated value (or something random-ish)
-      * for random simulations.
-      */
-    val seededRandom = new Random(randomSeed)
-
-    /** The target population member. */
-    val target: T
-
     var currentGen = 0
     var population = new Array[T](populationSize)
     var bestSolution = new T(this)
 
-    //Checks if the current generation is the final one
+    /** Checks if the current generation is the final one.
+      *
+      * @return True if the current generation is final (or ideally, but not necessarily, past that)
+      */
     def haltCond: Boolean
 
     def step(): Boolean = {
@@ -56,7 +57,6 @@ abstract class Population[T <: Chromosome] {
     def newPop(): Unit = {
         val nextPop = new Array[T](populationSize)
         Sorting.quickSort[T](population)
-        population = population.reverse
 
         //Copied elitism chromosomes
         for (i <- 0 until elitismCount) {
@@ -109,7 +109,6 @@ abstract class Population[T <: Chromosome] {
 
     def getBest: Array[Boolean] = {
         Sorting.quickSort[T](population)
-        population = population.reverse
         population(0).genesToArray
     }
 
