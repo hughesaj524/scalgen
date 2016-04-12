@@ -8,29 +8,28 @@ import scala.util.{Random, Sorting}
 /** A generic controller class for genetic algorithms
   *
   */
-abstract class Population extends Chromosome {
-    type T = Chromosome
+trait Population extends GeneLink {
     /** The random number generator. Ensures simulations are identical for easier testing; consistent randomness lets
       * you see effects of changes more clearly. Alternately, use a randomly generated value (or something random-ish)
       * for random simulations.
       */
     val seededRandom = new Random(randomSeed)
     /** The target population member. */
-    val target: Chromosome
+    val target: C
+    /** The seed used to create a random generator. See seededRandom for more info. */
+    var randomSeed: Int
     /** The number of genes contained in one chromosome. */
     var geneCount: Int
     /** The number of members in the population. MUST BE EVEN because I am bad at scala. */
-    //TODO: fix this <-
+    //TODO: fix this ↑
     var populationSize: Int
     /** The chance out of 1 that each gene will mutate. Around 0.0015 is good. */
     var mutateChance: Double
     /** The number of "best" solutions copied from one generation to the next. 0 is fine. */
     var elitismCount: Int
-    /** The seed used to create a random generator. See seededRandom for more info. */
-    var randomSeed: Int
-    var currentGen = 0
-    var population = new Array[T](populationSize)
-    var bestSolution = new T(this)
+    var population = new Array[C](populationSize)
+    var bestSolution = new C(this)
+    protected var currentGen = 0
 
     /** Checks if the current generation is the final one.
       *
@@ -44,7 +43,7 @@ abstract class Population extends Chromosome {
         } else {
             if (population.length == 0) {
                 for (i <- 0 until populationSize) {
-                    population(i) = new T(this)
+                    population(i) = new C(this)
                 }
             } else {
                 newPop()
@@ -55,8 +54,8 @@ abstract class Population extends Chromosome {
     }
 
     def newPop(): Unit = {
-        val nextPop = new Array[T](populationSize)
-        Sorting.quickSort[T](population)
+        val nextPop = new Array[C](populationSize)
+        Sorting.quickSort[C](population)
 
         //Copied elitism chromosomes
         for (i <- 0 until elitismCount) {
@@ -65,11 +64,11 @@ abstract class Population extends Chromosome {
 
         val weightedPop = weightPop
 
-        var parent1 = new T(this)
-        var parent2 = new T(this)
+        var parent1 = new C(this)
+        var parent2 = new C(this)
         var roulette: Double = 0d
-        var children: (T, T) = null
-        for (indx <- 0 until (populationSize / 2)) {
+        var children: (C, C) = null
+        for (index <- 0 until (populationSize / 2)) {
             roulette = seededRandom.nextDouble
 
             breakable {
@@ -91,15 +90,15 @@ abstract class Population extends Chromosome {
             }
 
             children = parent1 UX parent2
-            nextPop(indx * 2) = children._1
-            nextPop(indx * 2 - 1) = children._2
+            nextPop(index * 2) = children._1
+            nextPop(index * 2 - 1) = children._2
         }
     }
 
     //Created a new map with weighted values. See roulette wheel selection.
-    def weightPop: Map[Double, T] = {
+    def weightPop: Map[Double, C] = {
         var index = 0
-        var weightedPop = Map[Double, T]()
+        var weightedPop = Map[Double, C]()
         for (i <- population.indices) {
             index += i
             weightedPop += (((1 / i).asInstanceOf[Double], population(i)))
@@ -108,7 +107,7 @@ abstract class Population extends Chromosome {
     }
 
     def getBest: Array[Boolean] = {
-        Sorting.quickSort[T](population)
+        Sorting.quickSort[C](population)
         population(0).genesToArray
     }
 

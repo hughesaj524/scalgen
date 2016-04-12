@@ -3,14 +3,21 @@ package scalgen.generics
 // Created by sutol on 28/03/2016. Part of scalgen.
 
 
-abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Population with Ordered[Chromosome] {
-    val geneCount = parent.geneCount
-    var genes: Int = 0
+trait Chromosome extends Ordered[Chromosome] with GeneLink {
+    var genes: Int
+    var parent: P
 
-    if (geneSet == -1) {
-        genes = parent.seededRandom.nextInt((1 << geneCount) - 1)
-    } else {
-        genes = geneSet
+    def init(newParent: P): Unit = {
+        this.parent = newParent
+        this.setGenes()
+    }
+
+    def setGenes(geneSet: Int = -1): Unit = {
+        if (geneSet == -1) {
+            this.genes = parent.seededRandom.nextInt((1 << parent.geneCount) - 1)
+        } else {
+            this.genes = geneSet
+        }
     }
 
     //Gets the allele of a gene at a specific index.
@@ -19,18 +26,18 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Populat
         bit.asInstanceOf[Boolean]
     }
 
-    /** Produces a child from the genes of this chromosome and another.
+    /** Produces a child from the genes of this chromosome and another through uniform crossover.
       *
       * @param that The other chromosome for crossover.
       * @return A tuple of two chromosomes produced by the crossover
       */
-    def UX(that: this.type): (this.type, this.type) = {
+    def UX(that: C): (C, C) = {
         val parent1 = this.genesToArray
         val parent2 = that.genesToArray
-        val newGenes1 = new Array[Boolean](geneCount)
-        val newGenes2 = new Array[Boolean](geneCount)
+        val newGenes1 = new Array[Boolean](parent.geneCount)
+        val newGenes2 = new Array[Boolean](parent.geneCount)
 
-        for (i <- 0 until geneCount) {
+        for (i <- 0 until parent.geneCount) {
             if (parent.seededRandom.nextBoolean) {
                 newGenes1(i) = parent1(i)
                 newGenes2(i) = parent2(i)
@@ -40,8 +47,8 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Populat
             }
         }
 
-        val child1 = new this.type(parent, geneCount)
-        val child2 = new this.type(parent, geneCount)
+        val child1 = new C(parent, parent.geneCount)
+        val child2 = new C(parent, parent.geneCount)
         child1.arrayToGenes(newGenes1)
         child2.arrayToGenes(newGenes2)
         child1.mutate()
@@ -52,7 +59,7 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Populat
     //Mutates the chromosome according to the population's mutation chance.
     def mutate(): Unit = {
         val newGenes: Array[Boolean] = genesToArray
-        for (i <- 0 until geneCount)
+        for (i <- 0 until parent.geneCount)
             if (parent.seededRandom.nextDouble() > parent.mutateChance) {
                 newGenes(i) = !genesToArray(i)
             }
@@ -64,8 +71,8 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Populat
       * @return An array of booleans which represents the genes of the chromosome.
       */
     def genesToArray: Array[Boolean] = {
-        val bitArray = new Array[Boolean](geneCount)
-        for (i <- 0 until geneCount) {
+        val bitArray = new Array[Boolean](parent.geneCount)
+        for (i <- 0 until parent.geneCount) {
             if (((1 << i) & genes) == (1 << i)) {
                 bitArray(i) = true
             } else {
@@ -90,12 +97,12 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Populat
         convertedGenes
     }
 
-    def compare(that: this.type) = 0 - (this.getFitness - that.getFitness)
+    def compare(that: C) = 0 - (this.getFitness - that.getFitness)
 
     //Calculates the fitness value of the chromosome.
     def getFitness: Int = {
         var fitness: Int = 0
-        for (i <- 0 until geneCount) {
+        for (i <- 0 until parent.geneCount) {
             if (((1 << i) & genes) == ((1 << i) & parent.target.genes)) {
                 fitness += 1
             }
@@ -103,4 +110,3 @@ abstract class Chromosome(parent: Population, geneSet: Int = -1) extends Populat
         fitness
     }
 }
-
