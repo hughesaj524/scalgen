@@ -1,7 +1,8 @@
-package scalgen.generics
+package com.sutol.scalgen.generics
 
+import scala.collection.mutable.ListBuffer
+import scala.util.Random
 import scala.util.control.Breaks._
-import scala.util.{Random, Sorting}
 
 // Created by sutol on 30/03/2016. Part of scalgen.
 
@@ -9,14 +10,13 @@ import scala.util.{Random, Sorting}
   *
   */
 trait Population extends GeneLink {
-    /** The random number generator. Ensures simulations are identical for easier testing; consistent randomness lets
-      * you see effects of changes more clearly. Alternately, use a randomly generated value (or something random-ish)
-      * for random simulations.
-      */
+    /** The random number generator. See randomSeed for more info. */
     val seededRandom = new Random(randomSeed)
     /** The target population member. */
     val target: C
-    /** The seed used to create a random generator. See seededRandom for more info. */
+    /** The seed used to create a random generator. Ensures simulations are identical for easier testing; consistent
+      * randomness lets you see effects of changes more clearly. Alternately, use a randomly generated value
+      * (or something random-ish) for random simulations. */
     var randomSeed: Int
     /** The number of genes contained in one chromosome. */
     var geneCount: Int
@@ -27,8 +27,8 @@ trait Population extends GeneLink {
     var mutateChance: Double
     /** The number of "best" solutions copied from one generation to the next. 0 is fine. */
     var elitismCount: Int
-    var population = new Array[C](populationSize)
-    var bestSolution = new C(this)
+    var population = List[C]()
+    var bestSolution: C
     protected var currentGen = 0
 
     /** Checks if the current generation is the final one.
@@ -41,10 +41,12 @@ trait Population extends GeneLink {
         if (haltCond) {
             false
         } else {
-            if (population.length == 0) {
+            var popBuffer = new ListBuffer[C]
+            if (population.isEmpty) {
                 for (i <- 0 until populationSize) {
-                    population(i) = new C(this)
+                    popBuffer += newC(this.asInstanceOf[P])
                 }
+                population = popBuffer.toList.sorted
             } else {
                 newPop()
             }
@@ -54,18 +56,17 @@ trait Population extends GeneLink {
     }
 
     def newPop(): Unit = {
-        val nextPop = new Array[C](populationSize)
-        Sorting.quickSort[C](population)
+        val nextPop = new ListBuffer[C]
 
         //Copied elitism chromosomes
         for (i <- 0 until elitismCount) {
-            nextPop(i) = population(0)
+            nextPop(i) = population(i)
         }
 
         val weightedPop = weightPop
 
-        var parent1 = new C(this)
-        var parent2 = new C(this)
+        var parent1 = newC(this.asInstanceOf[P])
+        var parent2 = newC(this.asInstanceOf[P])
         var roulette: Double = 0d
         var children: (C, C) = null
         for (index <- 0 until (populationSize / 2)) {
@@ -107,21 +108,6 @@ trait Population extends GeneLink {
     }
 
     def getBest: Array[Boolean] = {
-        Sorting.quickSort[C](population)
-        population(0).genesToArray
-    }
-
-    def wrapArray(array: Array[Boolean], length: Int): Array[Array[Array[Boolean]]] = {
-        val newArray = Array.ofDim[Boolean](length, length, length)
-        var counter = 0
-        for (ix <- 0 until length) {
-            for (iy <- 0 until length) {
-                for (iz <- 0 until length) {
-                    newArray(ix)(iy)(iz) = array(counter)
-                    counter += 1
-                }
-            }
-        }
-        newArray
+        population.head.genesToArray
     }
 }

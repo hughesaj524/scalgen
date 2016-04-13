@@ -1,4 +1,4 @@
-package scalgen.generics
+package com.sutol.scalgen.generics
 
 // Created by sutol on 28/03/2016. Part of scalgen.
 
@@ -30,8 +30,9 @@ trait Chromosome extends Ordered[Chromosome] with GeneLink {
       *
       * @param that The other chromosome for crossover.
       * @return A tuple of two chromosomes produced by the crossover
-      */
-    def UX(that: C): (C, C) = {
+      * @tparam T The type of the parameter / result. Ideally this wouldn't be necessary...
+      */ //TODO: Make this not require a tparam
+    def UX[T <: Chromosome](that: T): (T, T) = {
         val parent1 = this.genesToArray
         val parent2 = that.genesToArray
         val newGenes1 = new Array[Boolean](parent.geneCount)
@@ -47,8 +48,8 @@ trait Chromosome extends Ordered[Chromosome] with GeneLink {
             }
         }
 
-        val child1 = new C(parent, parent.geneCount)
-        val child2 = new C(parent, parent.geneCount)
+        val child1 = new T(parent)
+        val child2 = new T(parent)
         child1.arrayToGenes(newGenes1)
         child2.arrayToGenes(newGenes2)
         child1.mutate()
