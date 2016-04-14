@@ -13,6 +13,8 @@ trait GeneLink {
 
     /** The constructor for the chromosome class.
       *
+      * NOTE: It's not enforced, but it's recommended to define a newC for arrays as well.
+      *
       * @param parent The parent of the chromosome.
       * @param genes  The genes of the chromosome. Can be omitted.
       * @return A new chromosome with the genes and parent specified.

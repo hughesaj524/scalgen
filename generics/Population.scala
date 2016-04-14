@@ -8,26 +8,23 @@ import scala.util.control.Breaks._
 
 /** A generic controller class for genetic algorithms */
 trait Population extends GeneLink {
-    /** The target population member. */
-    val target: C
     /** The seed used to create a random generator. Ensures simulations are identical for easier testing; consistent
       * randomness lets you see effects of changes more clearly. Alternately, use a randomly generated value
       * (or something random-ish) for random simulations. */
-    var randomSeed: Int
+    val randomSeed: Int
     /** The number of genes contained in one chromosome. */
-    var geneCount: Int
+    val geneCount: Int
     /** The number of members in the population. MUST BE EVEN because I am bad at scala. */
     //TODO: fix this ↑ population count only being even due to newPop iterator
-    var populationSize: Int
+    val populationSize: Int
     /** The chance out of 1 that each gene will mutate. Around 0.0015 is good. */
-    var mutateChance: Double
+    var mutateChance: Double = 0.0015d
     /** The number of "best" solutions copied from one generation to the next. 0 is fine. */
-    var elitismCount: Int
+    val elitismCount: Int
 
     /** The population of chromosomes. It should be an array, but generic types are a nightmare. */
     //TODO: fix this ↑ population being a list
     var population = List[C]()
-    var bestSolution: C
     protected var currentGen = 0
     /** The random number generator. See randomSeed for more info. */
     val seededRandom = new Random(randomSeed)
@@ -46,27 +43,26 @@ trait Population extends GeneLink {
         if (haltCond) {
             false
         } else {
-            var popBuffer = new ListBuffer[C]
             if (population.isEmpty) {
+                val popBuffer = new ListBuffer[C]
                 for (i <- 0 until populationSize) {
-                    popBuffer += newC(this.asInstanceOf[P])
+                    popBuffer.prepend(newC(this.asInstanceOf[P]))
                 }
                 population = popBuffer.toList.sorted
             } else {
                 newPop()
             }
-
             population.length == populationSize
         }
     }
 
     /** Produces a new generation of chromosomes from the current one. Uses UX and roulette selection by default. */
     def newPop(): Unit = {
-        val nextPop = new ListBuffer[C]
+        val nextPop = ListBuffer.empty[C]
 
         //Copied elitism chromosomes
         for (i <- 0 until elitismCount) {
-            nextPop(i) = population(i)
+            nextPop += population(i)
         }
 
         val weightedPop = weightPop
@@ -78,7 +74,7 @@ trait Population extends GeneLink {
         var children: (C, C) = null
 
         //choose two parents, crossover producing two children, which join new population.
-        for (index <- 0 until (populationSize / 2)) {
+        for (index <- elitismCount until (populationSize / 2)) {
             roulette = seededRandom.nextDouble
 
             breakable {
@@ -98,10 +94,10 @@ trait Population extends GeneLink {
                     }
                 }
             }
-
+            //end split
             children = (parent1 UX parent2).asInstanceOf[Tuple2[C, C]]
-            nextPop(index * 2) = children._1
-            nextPop(index * 2 - 1) = children._2
+            nextPop += children._1
+            nextPop += children._2
         }
         population = nextPop.toList.sorted
     }
@@ -111,18 +107,16 @@ trait Population extends GeneLink {
       * @return A map of weighted floats paired with chromosomes.
       */
     def weightPop: Map[Double, C] = {
-        var index = 0
         var weightedPop = Map[Double, C]()
         for (i <- population.indices) {
-            index += i
-            weightedPop += (((1 / i).asInstanceOf[Double], population(i)))
+            weightedPop += (((1 / (i + 1)).asInstanceOf[Double], population(i)))
         }
         weightedPop
     }
 
-    /** Syntactical sugar; finds the best solution in an array as an array of boolean values for pretty abstraction
+    /** Syntactical sugar; finds the best solution from the population.
       *
-      * @return The best solution's alleles as an array of boolean values.
+      * @return The best solution.
       */
-    def getBest: Array[Boolean] = population.head.genesToArray
+    def getBest: C = population.head
 }

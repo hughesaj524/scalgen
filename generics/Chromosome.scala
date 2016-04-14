@@ -8,8 +8,8 @@ package com.sutol.scalgen.generics
   * states, or alleles. The genes are actually stored as a singe integer for efficiency reasons, but there are plenty
   * of functions to abstract that away if you don't want to deal with it.
   */
-trait Chromosome extends Ordered[Chromosome] with GeneLink {
-    var genes: Int
+trait Chromosome extends GeneLink {
+    var genes: Int = _
     var parent: P
 
     /** Initializes the chromosome. You should ABSOLUTELY call this in your class constructor, or unexpected things
@@ -126,24 +126,9 @@ trait Chromosome extends Ordered[Chromosome] with GeneLink {
         bitArray
     }
 
-    /** Returns the difference between this and another chromosome's fitness.
-      *
-      * Inherited from Ordered, so primarily for sorting, but it's probably fine to use it for anything else! Just
-      * keep in mind it negates the result to ensure the fittest chromosome is first.
-      */
-    def compare(that: C) = -(this.getFitness - that.getFitness)
-
     /** Returns the fitness value of the chromosome.
       *
       * @return The fitness of the chromosome as an integer.
       */
-    def getFitness: Int = {
-        var fitness: Int = 0
-        for (i <- 0 until parent.geneCount) {
-            if (((1 << i) & genes) == ((1 << i) & parent.target.genes)) {
-                fitness += 1
-            }
-        }
-        fitness
-    }
+    def getFitness: Int
 }
