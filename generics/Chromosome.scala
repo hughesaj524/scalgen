@@ -26,11 +26,15 @@ trait Chromosome extends GeneLink {
     /** Sets the genes of the chromosome.
       *
       * @param geneSet An integer representing the genes of the chromosome.
+      * @throws IllegalArgumentException if the new gene set is too high for the gene count dictated by the population.
       */
     def setGenes(geneSet: Int): Unit = {
         if (geneSet == -1) {
             this.genes = parent.seededRandom.nextInt((1 << parent.geneCount) - 1)
         } else {
+            if (geneSet > Integer.parseInt("1" * parent.geneCount, 2)) {
+                throw new IllegalArgumentException("Invalid gene set for chromosome!")
+            }
             this.genes = geneSet
         }
     }
@@ -41,21 +45,6 @@ trait Chromosome extends GeneLink {
       */
     def setGenes(geneSet: Array[Boolean]): Unit = {
         this.genes = arrayToGenes(geneSet)
-    }
-
-    /** Sets an array of boolean values to the current chromosome's genes.
-      *
-      * @param arrayOfBits An array of booleans
-      * @return The array of booleans as represented by an integer.
-      */
-    def arrayToGenes(arrayOfBits: Array[Boolean]): Int = {
-        var convertedGenes: Int = 0
-        for (i <- arrayOfBits.indices) {
-            if (arrayOfBits(i)) {
-                convertedGenes = convertedGenes | (1 << i)
-            }
-        }
-        convertedGenes
     }
 
     /** Returns the allele of a gene at a specific index.
@@ -75,6 +64,8 @@ trait Chromosome extends GeneLink {
       * @tparam T The type of the parameter / result. Ideally this wouldn't be necessary...
       */
     //TODO: Make this not require a tparam
+    //TODO: Optimise
+    //TODO: Add more crossover functions for different types of crossover
     def UX[T <: Chromosome](that: T): (C, C) = {
         val parent1 = this.genesToArray
         val parent2 = that.genesToArray
@@ -102,12 +93,27 @@ trait Chromosome extends GeneLink {
 
     /** Mutates the chromosome according to the population's mutation chance. */
     def mutate(): Unit = {
-        val newGenes: Array[Boolean] = genesToArray
+        var newGenes: Int = genes
         for (i <- 0 until parent.geneCount)
             if (parent.seededRandom.nextDouble() > parent.mutateChance) {
-                newGenes(i) = !genesToArray(i)
+                newGenes ^= (1 << i)
             }
-        arrayToGenes(newGenes)
+        setGenes(newGenes)
+    }
+
+    /** Sets an array of boolean values to the current chromosome's genes.
+      *
+      * @param arrayOfBits An array of booleans
+      * @return The array of booleans as represented by an integer.
+      */
+    def arrayToGenes(arrayOfBits: Array[Boolean]): Int = {
+        var convertedGenes: Int = 0
+        for (i <- arrayOfBits.indices) {
+            if (arrayOfBits(i)) {
+                convertedGenes |= (1 << i)
+            }
+        }
+        convertedGenes
     }
 
     /** Returns the current chromosome's genes as an array of boolean values representing the current alleles.

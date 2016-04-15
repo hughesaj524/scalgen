@@ -2,7 +2,7 @@ package com.sutol.scalgen.proj1
 
 import com.sutol.scalgen.generics.GeneLink
 
-// Created by sutol on 14/04/2016. Part of Omen'Ya.
+// Created by sutol on 14/04/2016. Part of scalgen.
 
 trait Link1 extends GeneLink {
     type C = Chrom1
