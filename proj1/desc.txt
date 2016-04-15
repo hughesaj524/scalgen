@@ -1,0 +1,2 @@
+This project is a simple test project to make sure everything is working.
+It tries to find the highest possible number given the parameters set in the population.

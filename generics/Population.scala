@@ -54,7 +54,8 @@ trait Population extends GeneLink {
                 newPop()
             }
             currentGen += 1
-            population.length == populationSize
+            //TODO: Investigate suspicious population sizes.
+            true
         }
     }
 

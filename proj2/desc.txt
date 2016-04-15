@@ -1,0 +1,2 @@
+This is the second project, to test how well the generic classes handle more complex examples.
+It finds the best parameters for the population from proj1.
