@@ -1,5 +1,7 @@
 package com.sutol.scalgen.generics
 
+import scala.collection.mutable
+
 // Created by sutol on 28/03/2016. Part of scalgen.
 
 /** A generic chromosome class for genetic algorithms.
@@ -9,7 +11,7 @@ package com.sutol.scalgen.generics
   * of functions to abstract that away if you don't want to deal with it.
   */
 trait Chromosome extends GeneLink {
-    var genes: Int = _
+    protected var genes: mutable.BitSet = _
     var parent: P
 
     /** Initializes the chromosome. You should ABSOLUTELY call this in your class constructor, or unexpected things
@@ -18,25 +20,21 @@ trait Chromosome extends GeneLink {
       * @param newParent The population to be assigned as the parent of the chromosome.
       * @param geneSet   The set of genes for the chromosome. Can be omitted.
       */
-    def init(newParent: P, geneSet: Int = -1): Unit = {
+    def init(newParent: P, geneSet: mutable.BitSet = mutable.BitSet.empty): Unit = {
         this.parent = newParent
         this.setGenes(geneSet)
     }
 
     /** Sets the genes of the chromosome.
       *
-      * @param geneSet An integer representing the genes of the chromosome.
+      * @param geneSet A mutable bitSet representing the genes of the chromosome.
       * @throws IllegalArgumentException if the new gene set is too high for the gene count dictated by the population.
       */
-    def setGenes(geneSet: Int): Unit = {
-        if (geneSet == -1) {
-            this.genes = parent.seededRandom.nextInt((1 << parent.geneCount) - 1)
-        } else {
-            if (geneSet > Integer.parseInt("1" * parent.geneCount, 2)) {
-                throw new IllegalArgumentException("Invalid gene set for chromosome!")
-            }
-            this.genes = geneSet
+    def setGenes(geneSet: mutable.BitSet): Unit = {
+        if (geneSet.size > parent.geneCount) {
+            throw new IllegalArgumentException("Invalid gene set for chromosome!")
         }
+        this.genes = geneSet
     }
 
     /** Sets the genes of the chromosome.
@@ -44,7 +42,13 @@ trait Chromosome extends GeneLink {
       * @param geneSet An array of booleans representing the alleles of the genes of the chromosome.
       */
     def setGenes(geneSet: Array[Boolean]): Unit = {
-        this.genes = arrayToGenes(geneSet)
+        val newGenes = mutable.BitSet.empty
+        for (i <- 0 until parent.geneCount) {
+            if (geneSet(i)) {
+                newGenes.add(i)
+            }
+        }
+        setGenes(newGenes)
     }
 
     /** Returns the allele of a gene at a specific index.
@@ -53,8 +57,7 @@ trait Chromosome extends GeneLink {
       * @return The allele of the gene at the specified index.
       */
     def geneAt(index: Int): Boolean = {
-        val bit = this.genes & (1 << index) >> index
-        bit.asInstanceOf[Boolean]
+        genes(index)
     }
 
     /** Produces a child from the genes of this chromosome and another through uniform crossover.
@@ -93,10 +96,14 @@ trait Chromosome extends GeneLink {
 
     /** Mutates the chromosome according to the population's mutation chance. */
     def mutate(): Unit = {
-        var newGenes: Int = genes
+        val newGenes: mutable.BitSet = genes
         for (i <- 0 until parent.geneCount)
             if (parent.seededRandom.nextDouble() > parent.mutateChance) {
-                newGenes ^= (1 << i)
+                if (genes(i)) {
+                    genes.remove(i)
+                } else {
+                    genes.add(i)
+                }
             }
         setGenes(newGenes)
     }
@@ -123,11 +130,7 @@ trait Chromosome extends GeneLink {
     def genesToArray: Array[Boolean] = {
         val bitArray = new Array[Boolean](parent.geneCount)
         for (i <- 0 until parent.geneCount) {
-            if (((1 << i) & genes) == (1 << i)) {
-                bitArray(i) = true
-            } else {
-                bitArray(i) = false
-            }
+            bitArray(i) = genes(i)
         }
         bitArray
     }
