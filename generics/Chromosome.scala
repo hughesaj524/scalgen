@@ -37,6 +37,8 @@ trait Chromosome extends GeneLink {
         this.genes = geneSet
     }
 
+    def getGenes: mutable.BitSet = { genes }
+
     /** Sets the genes of the chromosome.
       *
       * @param geneSet An array of booleans representing the alleles of the genes of the chromosome.

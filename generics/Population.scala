@@ -41,7 +41,16 @@ trait Population extends GeneLink {
       * @return False if finished, otherwise true
       */
     def step(): Boolean = {
-        if (haltCond) {
+        // evaluate this first to allow population values to be used in halt condition, e.g. halting if peak fitness
+        // crosses a certain threshold
+        if (population.isEmpty) {
+            val popBuffer = new ListBuffer[C]
+            for (i <- 0 until populationSize) {
+                popBuffer.prepend(newC(this.asInstanceOf[P]))
+            }
+            population = popBuffer.toList.sorted
+            true
+        } else if (haltCond) {
             false
         } else {
             if (population.isEmpty) {

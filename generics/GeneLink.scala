@@ -1,5 +1,7 @@
 package com.sutol.scalgen.generics
 
+import scala.collection.mutable
+
 // Created by sutol on 12/04/2016. Part of scalgen.
 
 /** A trait allowing for easier generic types in the generic classes.
@@ -19,5 +21,5 @@ trait GeneLink {
       * @param genes  The genes of the chromosome. Can be omitted.
       * @return A new chromosome with the genes and parent specified.
       */
-    def newC(parent: P, genes: Int = -1): C
+    def newC(parent: P, genes: mutable.BitSet = mutable.BitSet.empty): C
 }
