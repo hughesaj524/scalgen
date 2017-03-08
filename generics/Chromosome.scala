@@ -68,7 +68,7 @@ trait Chromosome extends GeneLink {
       * @return A tuple of two chromosomes produced by the crossover
       * @tparam T The type of the parameter / result. Ideally this wouldn't be necessary...
       */
-    //TODO: Make this not require a tparam
+    //FIXME: Make this not require a tparam
     //TODO: Optimise
     //TODO: Add more crossover functions for different types of crossover
     def UX[T <: Chromosome](that: T): (C, C) = {
